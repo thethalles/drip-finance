@@ -1,0 +1,2 @@
+# DRIP FINANCE
+Drip Finance is an innovative personal finance management app designed to simplify the financial control of Brazilians. With a focus on accessibility and technology, the app allows you to record income, track spending, filter expenses by category and period, and generate visually friendly reports. The proposal aims to democratize financial management, providing greater organization and motivation for more conscious and healthy financial decisions.
