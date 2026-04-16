@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - nome: string (required)
+    //   - email: string (required, email format)
+    //   - data_criacao: timestamp (optional)
+    //   - photoURL: string (optional)
+    //   - preferences: map (optional)
+    //
+    // Collection: wallets
+    // Document ID: {walletId}
+    // Path: /users/{userId}/wallets/{walletId}
+    // Fields:
+    //   - nome: string (required)
+    //   - saldo_inicial: number (required)
+    //   - tipo: string (required)
+    //   - data_criacao: timestamp (optional)
+    //
+    // Collection: transactions
+    // Document ID: {transactionId}
+    // Path: /users/{userId}/wallets/{walletId}/transactions/{transactionId}
+    // Fields:
+    //   - tipo: string (required, enum: ['receita', 'despesa'])
+    //   - categoriaId: string (required)
+    //   - valor: number (required)
+    //   - data: timestamp (required)
+    //   - descricao: string (optional)
+    //   - criado_em: timestamp (optional)
+    //   - atualizado_em: timestamp (optional)
+    //
+    // Collection: categories
+    // Document ID: {categoryId}
+    // Path: /users/{userId}/categories/{categoryId}
+    // Fields:
+    //   - nome: string (required)
+    //   - cor: string (optional)
+    //   - tipo: string (required, enum: ['receita', 'despesa'])
+    //   - criado_em: timestamp (optional)
+    //   - atualizado_em: timestamp (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.email is string && isValidEmail(data.email);
+    }
+
+    function isValidWallet(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.saldo_inicial is number &&
+             data.tipo is string;
+    }
+
+    function isValidTransaction(data) {
+      return data.tipo in ['receita', 'despesa'] &&
+             data.categoriaId is string &&
+             data.valor is number && data.valor >= 0 &&
+             data.data is timestamp;
+    }
+
+    function isValidCategory(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.tipo in ['receita', 'despesa'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isOwner(userId);
+
+      match /wallets/{walletId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidWallet(request.resource.data);
+        allow update: if isOwner(userId) && isValidWallet(request.resource.data);
+        allow delete: if isOwner(userId);
+
+        match /transactions/{transactionId} {
+          allow read: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidTransaction(request.resource.data);
+          allow update: if isOwner(userId) && isValidTransaction(request.resource.data);
+          allow delete: if isOwner(userId);
+        }
+      }
+
+      match /categories/{categoryId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCategory(request.resource.data);
+        allow update: if isOwner(userId) && isValidCategory(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

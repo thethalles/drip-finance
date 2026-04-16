@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-roboto-condensed: "Roboto Condensed", sans-serif;
+  
+  --color-primary: #0B770B;
+  --color-secondary: #161616;
+  --color-surface: #222222;
+  --color-text-muted: #696969;
+  --color-danger: #FF383C;
+}
+
+body {
+  @apply bg-secondary text-white font-sans;
+}

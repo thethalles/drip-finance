@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and preferences",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "data_criacao": { "type": "string", "format": "date-time" },
+        "photoURL": { "type": "string" },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "moeda": { "type": "string" },
+            "tema": { "type": "string" },
+            "notificacoes": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["nome", "email"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "User financial wallet or account",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "saldo_inicial": { "type": "number" },
+        "tipo": { "type": "string" },
+        "data_criacao": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nome", "saldo_inicial", "tipo"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction (income or expense)",
+      "type": "object",
+      "properties": {
+        "tipo": { "type": "string", "enum": ["receita", "despesa"] },
+        "categoriaId": { "type": "string" },
+        "valor": { "type": "number" },
+        "data": { "type": "string", "format": "date-time" },
+        "descricao": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" },
+        "atualizado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tipo", "categoriaId", "valor", "data"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Transaction category",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "cor": { "type": "string" },
+        "tipo": { "type": "string", "enum": ["receita", "despesa"] },
+        "criado_em": { "type": "string", "format": "date-time" },
+        "atualizado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nome", "tipo"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "users/{userId}/wallets/{walletId}": {
+      "schema": "Wallet",
+      "description": "User wallets"
+    },
+    "users/{userId}/wallets/{walletId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Transactions within a wallet"
+    },
+    "users/{userId}/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Custom user categories"
+    }
+  }
+}
