@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function Splash() {
   const { user, loading } = useAuth();
