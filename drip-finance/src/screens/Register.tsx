@@ -15,12 +15,22 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.');
       return;
     }
+
     if (password.length < 8) {
       setError('A senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+
+    if (!hasUppercase || !hasSpecialChar) {
+      setError('A senha deve conter pelo menos 1 letra maiúscula e 1 caractere especial.');
       return;
     }
 
@@ -45,7 +55,6 @@ export default function Register() {
         }
       });
 
-      // Add default categories
       const categoriesRef = collection(db, 'users', user.uid, 'categories');
       const defaultCategories = [
         { nome: 'Salário', tipo: 'receita', cor: '#0B770B' },
@@ -56,7 +65,6 @@ export default function Register() {
         { nome: 'Saúde', tipo: 'despesa', cor: '#FF383C' },
       ];
 
-      // Use Promise.all for faster category creation
       await Promise.all(defaultCategories.map(cat => 
         addDoc(categoriesRef, {
           ...cat,
@@ -74,8 +82,6 @@ export default function Register() {
         setError('E-mail inválido.');
       } else if (err.code === 'auth/weak-password') {
         setError('A senha é muito fraca.');
-      } else if (err.message.includes('permission-denied')) {
-        setError('Erro de permissão ao salvar dados. Verifique as regras do banco.');
       } else {
         setError('Erro ao cadastrar: ' + (err.message || 'Verifique os dados e tente novamente.'));
       }

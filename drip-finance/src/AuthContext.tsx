@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from './firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
   userData: any | null;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, userData: null });
@@ -16,40 +16,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 1. Gerencia o estado de Autenticação
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        } else {
-          // Initialize user data if it doesn't exist
-          const initialData = {
-            nome: user.displayName || 'Usuário',
-            email: user.email,
-            data_criacao: new Date(),
-            photoURL: user.photoURL || '',
-            preferences: {
-              moeda: 'BRL',
-              tema: 'dark',
-              notificacoes: true
-            }
-          };
-          await setDoc(doc(db, 'users', user.uid), initialData);
-          setUserData(initialData);
-        }
-      } else {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
         setUserData(null);
+        setLoading(false);
       }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // 2. Gerencia os dados do Firestore de forma independente
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    
+    const unsubscribeDoc = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        // Atualização instantânea do estado global
+        setUserData(docSnap.data());
+        setLoading(false);
+      } else {
+        // Inicialização se o documento não existir (ex: logo após o registro)
+        const initialData = {
+          nome: user.displayName || 'Usuário',
+          email: user.email,
+          data_criacao: new Date(),
+          photoURL: user.photoURL || '',
+          preferences: {
+            moeda: 'BRL',
+            tema: 'dark',
+            notificacoes: true
+          }
+        };
+        setDoc(userDocRef, initialData).then(() => {
+          setUserData(initialData);
+          setLoading(false);
+        });
+      }
+    }, (error) => {
+      console.error("Erro no listener do Firestore:", error);
       setLoading(false);
     });
 
-    return unsubscribe;
-  }, []);
+    return () => unsubscribeDoc();
+  }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, userData }}>
+    <AuthContext.Provider value={{ user, userData, loading }}>
       {children}
     </AuthContext.Provider>
   );
