@@ -5,6 +5,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) {
+    return '';
+  }
+
+  const cents = Number.parseInt(digits, 10);
+
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
+export function parseCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) {
+    return 0;
+  }
+
+  return Number.parseInt(digits, 10) / 100;
+}
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',

@@ -3,7 +3,7 @@ import { X, Trash2, Plus, Wallet, ChevronDown } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, collection, onSnapshot, serverTimestamp, increment, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../AuthContext';
-import { cn } from '../lib/utils';
+import { cn, formatCurrencyInput, parseCurrencyInput } from '../lib/utils';
 import CategoryModal from './CategoryModal';
 
 interface WalletEntry {
@@ -78,7 +78,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
       });
 
       entries.forEach((entry) => {
-        const val = parseFloat(entry.value);
+        const val = parseCurrencyInput(entry.value);
         const newTxRef = doc(collection(db, 'users', user.uid, 'wallets', entry.walletId, 'transactions'));
         batch.set(newTxRef, {
           groupId,
@@ -122,7 +122,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-surface rounded-t-[40px] p-8 pb-12 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain bg-surface rounded-t-[40px] p-8 pb-12 animate-in slide-in-from-bottom duration-300">
         <div className="flex items-center justify-between mb-8">
           <button onClick={onClose} className="w-10 h-10 bg-text-muted/20 rounded-lg flex items-center justify-center text-white"><X size={24} /></button>
           <h2 className="text-white text-2xl font-bold">Editar Transação</h2>
@@ -179,7 +179,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
                   <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
                 </div>
 
-                <div className="relative"><span className="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted text-sm">R$</span><input type="number" step="0.01" placeholder="0,00" className="w-full h-10 bg-transparent border-b border-text-muted pl-6 text-white focus:outline-none focus:border-primary font-roboto-condensed text-lg" value={entry.value} onChange={(e) => updateEntry(index, 'value', e.target.value)} required /></div>
+                <div className="relative"><span className="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted text-sm">R$</span><input type="text" inputMode="numeric" placeholder="0,00" className="w-full h-10 bg-transparent border-b border-text-muted pl-6 text-white focus:outline-none focus:border-primary font-roboto-condensed text-lg" value={entry.value} onChange={(e) => updateEntry(index, 'value', formatCurrencyInput(e.target.value))} required /></div>
               </div>
             ))}
           </div>

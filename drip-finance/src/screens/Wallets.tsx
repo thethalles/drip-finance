@@ -7,6 +7,10 @@ import { cn } from '../lib/utils';
 import WalletModal from '../components/WalletModal';
 import EditWalletModal from '../components/EditWalletModal';
 
+function isImageUrl(value: string) {
+  return /^https?:\/\//i.test(value) || /^data:image\//i.test(value);
+}
+
 export default function Wallets() {
   const { user } = useAuth();
   const [wallets, setWallets] = useState<any[]>([]);
@@ -69,7 +73,15 @@ export default function Wallets() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                    <WalletIcon className="text-white" size={24} />
+                    {wallet.icon ? (
+                      isImageUrl(wallet.icon) ? (
+                        <img src={wallet.icon} alt="Wallet icon" className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="text-white text-2xl leading-none">{wallet.icon}</span>
+                      )
+                    ) : (
+                      <WalletIcon className="text-white" size={24} />
+                    )}
                   </div>
                   <div>
                     <p className="text-white font-medium">{wallet.nome}</p>

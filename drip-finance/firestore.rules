@@ -81,7 +81,8 @@ service cloud.firestore {
     function isValidWallet(data) {
       return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
              data.saldo_inicial is number &&
-             data.tipo is string;
+             data.tipo is string &&
+             (!data.keys().hasAny(['icon']) || data.icon is string);
     }
 
     function isValidTransaction(data) {
