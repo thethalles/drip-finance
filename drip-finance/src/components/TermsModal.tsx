@@ -43,7 +43,7 @@ export default function TermsModal({
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 py-6">
       <div className="w-full max-w-md bg-surface rounded-3xl shadow-2xl overflow-hidden max-h-[88vh] flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="px-6 pt-6 pb-4 border-b border-white/5">
-          <h3 className="text-white text-2xl font-bold leading-tight">Política de Privacidade e Termos de Uso</h3>
+          <h3 className="text-white text-2xl font-bold leading-tight">Termos e Condições</h3>
           <p className="text-text-muted text-sm mt-2">
             Leia até o final para consultar os termos do aplicativo.
           </p>

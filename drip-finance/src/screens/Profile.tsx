@@ -69,7 +69,7 @@ export default function Profile() {
         >
           <div className="flex items-center gap-4">
             <Shield className="text-white" size={24} />
-            <span className="text-white font-medium text-lg">Política de Privacidade e Termos</span>
+            <span className="text-white font-medium text-lg">Termos e Condições</span>
           </div>
           <ChevronRight className="text-text-muted group-hover:text-white transition-colors" size={24} />
         </button>
