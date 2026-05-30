@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fetchSignInMethodsForEmail, sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
 import logoDripFinance from '../assets/LogoDripFinance.png';
@@ -12,19 +12,15 @@ export default function ForgotPassword() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-
-      if (!signInMethods.length) {
-        setError('E-mail não encontrado.');
-        setMessage('');
-        return;
-      }
-
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email.trim());
       setMessage('Um e-mail de recuperação foi enviado.');
       setError('');
     } catch (err: any) {
-      setError('E-mail não encontrado.');
+      if (err?.code === 'auth/invalid-email') {
+        setError('E-mail inválido.');
+      } else {
+        setError('Não foi possível enviar o e-mail de recuperação.');
+      }
       setMessage('');
     }
   };
