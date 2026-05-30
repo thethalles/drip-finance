@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../AuthContext';
 import { db } from '../firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { Plus, ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatDateDisplay, normalizeFirestoreDate } from '../lib/utils';
 import TransactionModal from '../components/TransactionModal';
 import EditTransactionModal from '../components/EditTransactionModal';
 
@@ -12,9 +12,31 @@ export default function Home() {
   const [walletDataMap, setWalletDataMap] = useState<Record<string, any[]>>({});
   const [wallets, setWallets] = useState<any[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
+  const [now, setNow] = useState(() => new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const refreshTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const scheduleRefresh = () => {
+      const nextTick = new Date();
+      nextTick.setHours(24, 0, 0, 0);
+
+      refreshTimeoutRef.current = window.setTimeout(() => {
+        setNow(new Date());
+        scheduleRefresh();
+      }, nextTick.getTime() - Date.now());
+    };
+
+    scheduleRefresh();
+
+    return () => {
+      if (refreshTimeoutRef.current !== null) {
+        window.clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -43,6 +65,18 @@ export default function Home() {
 
   const { transactions, totalIncome, totalExpense } = useMemo(() => {
     const rawMerged = Object.values(walletDataMap).flat();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const monthlyTransactions = rawMerged.filter((tx) => {
+      const transactionDate = normalizeFirestoreDate(tx.data);
+
+      if (!transactionDate) {
+        return false;
+      }
+
+      return transactionDate >= monthStart && transactionDate < nextMonthStart;
+    });
     
     const grouped = rawMerged.reduce((acc: any[], current) => {
       const existingIndex = current.groupId 
@@ -74,15 +108,15 @@ export default function Home() {
       return createdB - createdA;
     });
 
-    const income = rawMerged.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0);
-    const expense = rawMerged.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0);
+    const income = monthlyTransactions.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0);
+    const expense = monthlyTransactions.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0);
 
     return { 
       transactions: sorted.slice(0, 10), 
       totalIncome: income, 
       totalExpense: expense 
     };
-  }, [walletDataMap]);
+  }, [walletDataMap, now]);
 
   const handleEditTransaction = (tx: any) => {
     setSelectedTransaction(tx);
@@ -113,14 +147,14 @@ export default function Home() {
           </div>
           <div className="flex justify-between">
             <div className="flex flex-col">
-              <span className="text-xs font-semibold">Receita</span>
+              <span className="text-xs font-semibold">Receita Mensal</span>
               <div className="flex items-center gap-1 text-primary font-bold">
                 <ArrowUpCircle size={16} />
                 <span>R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold">Gastos</span>
+              <span className="text-xs font-semibold">Gastos Mensais</span>
               <div className="flex items-center gap-1 text-danger font-bold">
                 <ArrowDownCircle size={16} />
                 <span>R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -170,7 +204,7 @@ export default function Home() {
                   <p className={cn("font-bold font-roboto-condensed", tx.tipo === 'receita' ? "text-primary" : "text-danger")}>
                     {tx.tipo === 'receita' ? '+' : '-'} R$ {tx.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-text-muted text-[10px]">{tx.data?.seconds ? new Date(tx.data.seconds * 1000).toLocaleDateString('pt-BR') : '...'}</p>
+                  <p className="text-text-muted text-[10px]">{formatDateDisplay(tx.data)}</p>
                 </div>
               </div>
             ))

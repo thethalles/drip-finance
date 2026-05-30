@@ -11,15 +11,20 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (err: any) {
       setError('Credenciais inválidas. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,6 +44,7 @@ export default function Login() {
           className="w-full h-12 bg-transparent border border-text-muted rounded-full px-6 text-white focus:outline-none focus:border-primary"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
           required
         />
         <div className="relative">
@@ -49,14 +55,16 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
+            disabled={isLoading}
             required
           />
           <button
             type="button"
             onClick={() => setIsPasswordVisible((current) => !current)}
-            className="absolute inset-y-0 right-0 flex items-center justify-center px-4 text-text-muted transition-colors hover:text-white"
+            className="absolute inset-y-0 right-0 flex items-center justify-center px-4 text-text-muted transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
             aria-pressed={isPasswordVisible}
+            disabled={isLoading}
           >
             {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -66,9 +74,16 @@ export default function Login() {
         
         <button
           type="submit"
-          className="w-full h-12 bg-primary text-white font-bold rounded-full mt-4 hover:opacity-90 transition-opacity"
+          className="w-full h-12 bg-primary text-white font-bold rounded-full mt-4 hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
+          disabled={isLoading}
         >
-          Entrar
+          {isLoading && (
+            <span
+              className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              aria-hidden="true"
+            />
+          )}
+          {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
       

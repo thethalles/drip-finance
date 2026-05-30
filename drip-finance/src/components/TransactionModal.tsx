@@ -3,7 +3,7 @@ import { X, Plus, Calendar, ChevronDown, Image as ImageIcon, Trash2, Wallet } fr
 import { db } from '../firebase';
 import { collection, doc, onSnapshot, serverTimestamp, increment, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../AuthContext';
-import { cn, formatCurrencyInput, parseCurrencyInput } from '../lib/utils';
+import { cn, formatCurrencyInput, formatDateInputValue, parseCalendarDateInput, parseCurrencyInput } from '../lib/utils';
 import CategoryModal from './CategoryModal';
 
 interface WalletEntry {
@@ -21,7 +21,7 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
   const [type, setType] = useState<'receita' | 'despesa'>('receita');
   const [entries, setEntries] = useState<WalletEntry[]>([{ walletId: '', value: '' }]);
   const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => formatDateInputValue(new Date()));
   const [description, setDescription] = useState('');
   const [wallets, setWallets] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -87,7 +87,7 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
           categoriaId: categoryId,
           categoriaNome: categories.find(c => c.id === categoryId)?.nome || '',
           valor: txValue,
-          data: new Date(date),
+          data: parseCalendarDateInput(date),
           descricao: description,
           criado_em: serverTimestamp(),
           atualizado_em: serverTimestamp()
@@ -251,7 +251,7 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
         </form>
       </div>
 
-      <CategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} type={type} />
+      <CategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} type={type} categories={categories} />
     </div>
   );
 }

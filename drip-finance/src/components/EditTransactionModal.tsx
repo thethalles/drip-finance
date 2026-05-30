@@ -3,7 +3,7 @@ import { X, Trash2, Plus, Wallet, ChevronDown } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, collection, onSnapshot, serverTimestamp, increment, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../AuthContext';
-import { cn, formatCurrencyInput, parseCurrencyInput } from '../lib/utils';
+import { cn, formatCurrencyInput, formatCurrencyValue, formatDateInputValue, parseCalendarDateInput, parseCurrencyInput } from '../lib/utils';
 import CategoryModal from './CategoryModal';
 
 interface WalletEntry {
@@ -35,11 +35,11 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
     if (transaction) {
       setType(transaction.tipo);
       setCategoryId(transaction.categoriaId);
-      setDate(new Date(transaction.data?.seconds * 1000).toISOString().split('T')[0]);
+      setDate(formatDateInputValue(transaction.data));
       setDescription(transaction.descricao || '');
       setEntries(transaction.allEntries.map((e: any) => ({
         walletId: e.walletId,
-        value: e.valor.toString(),
+        value: formatCurrencyValue(e.valor),
         originalTxId: e.id
       })));
       setIsDeleting(false);
@@ -61,9 +61,15 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
     setEntries(newEntries);
   };
 
+  const isFormValid = Boolean(
+    date && categoryId && entries.length > 0 &&
+    entries.every(en => en.walletId && en.walletId.trim() !== '' && parseCurrencyInput(en.value) > 0)
+  );
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !transaction || entries.some(e => !e.walletId || !e.value)) return;
+    if (!user || !transaction) return;
+    if (!isFormValid) return;
 
     setLoading(true);
     const batch = writeBatch(db);
@@ -86,7 +92,7 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
           categoriaId: categoryId,
           categoriaNome: categories.find(c => c.id === categoryId)?.nome || '',
           valor: val,
-          data: new Date(date),
+          data: parseCalendarDateInput(date),
           descricao: description,
           criado_em: transaction.criado_em || serverTimestamp(),
           atualizado_em: serverTimestamp()
@@ -182,15 +188,18 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
                 <div className="relative"><span className="absolute left-0 top-1/2 -translate-y-1/2 text-text-muted text-sm">R$</span><input type="text" inputMode="numeric" placeholder="0,00" className="w-full h-10 bg-transparent border-b border-text-muted pl-6 text-white focus:outline-none focus:border-primary font-roboto-condensed text-lg" value={entry.value} onChange={(e) => updateEntry(index, 'value', formatCurrencyInput(e.target.value))} required /></div>
               </div>
             ))}
+            {!isFormValid && (
+              <p className="text-danger text-sm">Preencha todas as carteiras com valores maiores que zero.</p>
+            )}
           </div>
           <div className="space-y-1"><label className="text-text-muted text-sm font-medium">Descrição (opcional)</label><textarea className="w-full h-20 bg-transparent border border-text-muted rounded-lg p-4 text-white focus:outline-none focus:border-primary resize-none" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
           <div className="pt-4 flex gap-4">
             <button type="button" onClick={handleDelete} className={cn("h-14 rounded-2xl flex items-center justify-center transition-all duration-200", isDeleting ? "bg-danger w-full text-white font-bold" : "bg-danger/20 w-14 text-danger")}>{isDeleting ? "Confirmar Exclusão" : <Trash2 size={24} />}</button>
-            {!isDeleting && (<button type="submit" disabled={loading} className="flex-1 h-14 bg-primary text-white font-bold text-lg rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar Alterações'}</button>)}
+            {!isDeleting && (<button type="submit" disabled={loading || !isFormValid} className="flex-1 h-14 bg-primary text-white font-bold text-lg rounded-2xl hover:opacity-90 transition-opacity disabled:opacity-50">{loading ? 'Salvando...' : 'Salvar Alterações'}</button>)}
           </div>
         </form>
       </div>
-      <CategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} type={type} />
+      <CategoryModal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} type={type} categories={categories} />
     </div>
   );
 }

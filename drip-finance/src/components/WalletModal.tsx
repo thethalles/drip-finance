@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -10,25 +10,47 @@ const walletEmojiOptions = ['💼', '💸', '🪙', '🏦', '📈', '🧾', '�
 interface WalletModalProps {
   isOpen: boolean;
   onClose: () => void;
+  wallets?: any[];
 }
 
-export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
+function normalizeWalletName(value: string) {
+  return value.trim().toLocaleLowerCase('pt-BR');
+}
+
+export default function WalletModal({ isOpen, onClose, wallets = [] }: WalletModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
   const [type, setType] = useState('Conta Corrente');
   const [icon, setIcon] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name || !initialBalance) return;
 
+    const trimmedName = name.trim();
+    const normalizedName = normalizeWalletName(trimmedName);
+    const alreadyExists = wallets.some((wallet) => normalizeWalletName(wallet.nome || '') === normalizedName);
+
+    if (alreadyExists) {
+      setError('Já existe uma carteira com esse nome.');
+      return;
+    }
+
     setLoading(true);
+    setError('');
     try {
       const walletsRef = collection(db, 'users', user.uid, 'wallets');
       await addDoc(walletsRef, {
-        nome: name,
+        nome: trimmedName,
         saldo_inicial: parseCurrencyInput(initialBalance),
         tipo: type,
         icon,
@@ -66,9 +88,13 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
               placeholder="Ex: Reserva de Emergência"
               className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white focus:outline-none focus:border-primary"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError('');
+              }}
               required
             />
+            {error && <p className="text-danger text-sm mt-2">{error}</p>}
           </div>
 
           <div className="space-y-1">

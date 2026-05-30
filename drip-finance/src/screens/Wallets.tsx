@@ -97,11 +97,12 @@ export default function Wallets() {
         </div>
       </section>
 
-      <WalletModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+      <WalletModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} wallets={wallets} />
       <EditWalletModal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
-        wallet={selectedWallet} 
+        wallet={selectedWallet}
+        wallets={wallets}
       />
     </div>
   );

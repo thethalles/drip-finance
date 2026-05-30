@@ -170,6 +170,12 @@ export default function Statistics() {
   }, [searchOpen]);
 
   useEffect(() => {
+    if (viewMode === 'Resumo' && searchOpen) {
+      setSearchOpen(false);
+    }
+  }, [viewMode, searchOpen]);
+
+  useEffect(() => {
     if (!user) return;
 
     const walletsRef = collection(db, 'users', user.uid, 'wallets');
@@ -472,11 +478,12 @@ export default function Statistics() {
         <button
           type="button"
           onClick={() => setSearchOpen((current) => !current)}
+          disabled={viewMode === 'Resumo'}
           className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+            "w-10 h-10 rounded-full flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-50",
             searchOpen ? "bg-white text-surface" : "bg-white/10 text-white"
           )}
-          aria-label={searchOpen ? 'Fechar pesquisa' : 'Abrir pesquisa'}
+          aria-label={viewMode === 'Resumo' ? 'Pesquisa indisponível no modo resumo' : searchOpen ? 'Fechar pesquisa' : 'Abrir pesquisa'}
         >
           {searchOpen ? <X size={20} /> : <Search size={20} />}
         </button>

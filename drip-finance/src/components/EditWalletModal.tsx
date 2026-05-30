@@ -11,13 +11,19 @@ interface EditWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
   wallet: any;
+  wallets?: any[];
 }
 
-export default function EditWalletModal({ isOpen, onClose, wallet }: EditWalletModalProps) {
+function normalizeWalletName(value: string) {
+  return value.trim().toLocaleLowerCase('pt-BR');
+}
+
+export default function EditWalletModal({ isOpen, onClose, wallet, wallets = [] }: EditWalletModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -29,15 +35,33 @@ export default function EditWalletModal({ isOpen, onClose, wallet }: EditWalletM
     }
   }, [wallet]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+    }
+  }, [isOpen]);
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !wallet || !name) return;
 
+    const trimmedName = name.trim();
+    const normalizedName = normalizeWalletName(trimmedName);
+    const alreadyExists = wallets.some((currentWallet) => (
+      currentWallet.id !== wallet.id && normalizeWalletName(currentWallet.nome || '') === normalizedName
+    ));
+
+    if (alreadyExists) {
+      setError('Já existe uma carteira com esse nome.');
+      return;
+    }
+
     setLoading(true);
+    setError('');
     try {
       const walletRef = doc(db, 'users', user.uid, 'wallets', wallet.id);
       await updateDoc(walletRef, {
-        nome: name,
+        nome: trimmedName,
         icon,
         atualizado_em: serverTimestamp()
       });
@@ -90,9 +114,13 @@ export default function EditWalletModal({ isOpen, onClose, wallet }: EditWalletM
               type="text"
               className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white focus:outline-none focus:border-primary"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError('');
+              }}
               required
             />
+            {error && <p className="text-danger text-sm mt-2">{error}</p>}
           </div>
 
           <div className="space-y-3">
