@@ -5,11 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { User, Shield, LogOut, ChevronRight, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 import EditProfileModal from '../components/EditProfileModal';
+import TermsModal from '../components/TermsModal';
+
+function isImageUrl(value: string) {
+  return /^https?:\/\//i.test(value) || /^data:image\//i.test(value);
+}
 
 export default function Profile() {
   const { userData } = useAuth();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -23,7 +29,11 @@ export default function Profile() {
       <div className="relative mb-6">
         <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center overflow-hidden">
           {userData?.photoURL ? (
-            <img src={userData.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            isImageUrl(userData.photoURL) ? (
+              <img src={userData.photoURL} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <span className="text-white text-6xl leading-none">{userData.photoURL}</span>
+            )
           ) : (
             <User size={64} className="text-white" />
           )}
@@ -53,10 +63,13 @@ export default function Profile() {
           <ChevronRight className="text-text-muted group-hover:text-white transition-colors" size={24} />
         </button>
 
-        <button className="w-full flex items-center justify-between p-4 bg-transparent border-b border-text-muted/30 group">
+        <button
+          onClick={() => setIsTermsModalOpen(true)}
+          className="w-full flex items-center justify-between p-4 bg-transparent border-b border-text-muted/30 group"
+        >
           <div className="flex items-center gap-4">
             <Shield className="text-white" size={24} />
-            <span className="text-white font-medium text-lg">Política de Privacidade</span>
+            <span className="text-white font-medium text-lg">Termos e Condições</span>
           </div>
           <ChevronRight className="text-text-muted group-hover:text-white transition-colors" size={24} />
         </button>
@@ -74,6 +87,11 @@ export default function Profile() {
       </div>
 
       <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        showAcceptAction={false}
+      />
     </div>
   );
 }

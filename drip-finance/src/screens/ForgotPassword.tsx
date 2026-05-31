@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Link } from 'react-router-dom';
+import logoDripFinance from '../assets/LogoDripFinance.png';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -11,20 +12,26 @@ export default function ForgotPassword() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email.trim());
       setMessage('Um e-mail de recuperação foi enviado.');
       setError('');
     } catch (err: any) {
-      setError('E-mail não encontrado.');
+      if (err?.code === 'auth/invalid-email') {
+        setError('E-mail inválido.');
+      } else {
+        setError('Não foi possível enviar o e-mail de recuperação.');
+      }
       setMessage('');
     }
   };
 
   return (
     <div className="h-screen w-full bg-secondary flex flex-col items-center px-8 pt-20">
-      <div className="w-40 h-40 bg-white/10 rounded-3xl flex items-center justify-center mb-12">
-         <span className="text-white font-bold text-3xl">DF</span>
-      </div>
+      <img
+        src={logoDripFinance}
+        alt="Logo Drip Finance"
+        className="h-36 w-36 object-contain sm:h-44 sm:w-44 md:h-60 md:w-60"
+      />
       
       <h2 className="text-white text-2xl font-semibold mb-8 text-center">Esqueci minha senha</h2>
       

@@ -3,29 +3,38 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import logoDripFinance from '../assets/LogoDripFinance.png';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (err: any) {
       setError('Credenciais inválidas. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="h-screen w-full bg-secondary flex flex-col items-center px-8 pt-20">
-      <div className="w-40 h-40 bg-white/10 rounded-3xl flex items-center justify-center mb-12">
-         <span className="text-white font-bold text-3xl">DF</span>
-      </div>
-      
+      <img
+        src={logoDripFinance}
+        alt="Logo Drip Finance"
+        className="h-36 w-36 object-contain sm:h-44 sm:w-44 md:h-60 md:w-60"
+      />
       <h2 className="text-white text-2xl font-semibold mb-8">Identifique-se:</h2>
       
       <form onSubmit={handleLogin} className="w-full space-y-4">
@@ -35,24 +44,46 @@ export default function Login() {
           className="w-full h-12 bg-transparent border border-text-muted rounded-full px-6 text-white focus:outline-none focus:border-primary"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
           required
         />
-        <input
-          type="password"
-          placeholder="Insira sua senha"
-          className="w-full h-12 bg-transparent border border-text-muted rounded-full px-6 text-white focus:outline-none focus:border-primary"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <input
+            type={isPasswordVisible ? 'text' : 'password'}
+            placeholder="Insira sua senha"
+            className="w-full h-12 bg-transparent border border-text-muted rounded-full px-6 pr-14 text-white focus:outline-none focus:border-primary"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={isLoading}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setIsPasswordVisible((current) => !current)}
+            className="absolute inset-y-0 right-0 flex items-center justify-center px-4 text-text-muted transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
+            aria-pressed={isPasswordVisible}
+            disabled={isLoading}
+          >
+            {isPasswordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         
         {error && <p className="text-danger text-sm text-center">{error}</p>}
         
         <button
           type="submit"
-          className="w-full h-12 bg-primary text-white font-bold rounded-full mt-4 hover:opacity-90 transition-opacity"
+          className="w-full h-12 bg-primary text-white font-bold rounded-full mt-4 hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
+          disabled={isLoading}
         >
-          Entrar
+          {isLoading && (
+            <span
+              className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              aria-hidden="true"
+            />
+          )}
+          {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
       
@@ -60,7 +91,7 @@ export default function Login() {
         <p className="text-white text-sm">
           Não tem uma conta? <Link to="/register" className="text-primary font-semibold">Cadastre-se</Link>
         </p>
-        <Link to="/forgot-password" size="sm" className="text-primary text-sm underline block">
+        <Link to="/forgot-password" className="text-primary text-sm underline block">
           Esqueci a minha senha
         </Link>
       </div>

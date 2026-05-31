@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { motion } from 'framer-motion';
+import logoDripFinance from '../assets/LogoDripFinance.png';
 
 export default function Splash() {
   const { user, loading } = useAuth();
@@ -28,17 +29,15 @@ export default function Splash() {
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center"
       >
-        <div className="w-48 h-48 bg-white/20 rounded-3xl flex items-center justify-center mb-4">
-          {/* Placeholder for Logo */}
-          <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center">
-             <span className="text-primary font-bold text-4xl">DF</span>
-          </div>
-        </div>
-        <h1 className="text-white text-4xl font-bold font-roboto">Drip Finance</h1>
+        <img
+          src={logoDripFinance}
+          alt="Logo Drip Finance"
+          className="h-36 w-36 object-contain sm:h-44 sm:w-44 md:h-60 md:w-60"
+        />
       </motion.div>
       
       <div className="absolute bottom-10 text-white font-semibold">
-        Powered By Drip Company
+        Desenvolvido por Drip Company
       </div>
     </div>
   );

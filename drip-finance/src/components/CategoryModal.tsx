@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -9,22 +9,44 @@ interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   type: 'receita' | 'despesa';
+  categories?: any[];
 }
 
-export default function CategoryModal({ isOpen, onClose, type }: CategoryModalProps) {
+function normalizeCategoryName(value: string) {
+  return value.trim().toLocaleLowerCase('pt-BR');
+}
+
+export default function CategoryModal({ isOpen, onClose, type, categories = [] }: CategoryModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name) return;
 
+    const trimmedName = name.trim();
+    const normalizedName = normalizeCategoryName(trimmedName);
+    const alreadyExists = categories.some((category) => normalizeCategoryName(category.nome || '') === normalizedName);
+
+    if (alreadyExists) {
+      setError('Já existe uma categoria com esse nome.');
+      return;
+    }
+
     setLoading(true);
+    setError('');
     try {
       const categoriesRef = collection(db, 'users', user.uid, 'categories');
       await addDoc(categoriesRef, {
-        nome: name,
+        nome: trimmedName,
         tipo: type,
         cor: '#0B770B',
         criado_em: serverTimestamp(),
@@ -54,10 +76,14 @@ export default function CategoryModal({ isOpen, onClose, type }: CategoryModalPr
               placeholder="Ex: Salário, Alimentação..."
               className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white focus:outline-none focus:border-primary"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError('');
+              }}
               required
               autoFocus
             />
+            {error && <p className="text-danger text-sm mt-2">{error}</p>}
           </div>
 
           <div className="flex gap-4">
