@@ -6,6 +6,11 @@ import { useAuth } from '../AuthContext';
 import { cn, formatCurrencyInput, formatCurrencyValue, formatDateInputValue, parseCalendarDateInput, parseCurrencyInput } from '../lib/utils';
 import CategoryModal from './CategoryModal';
 
+const DEFAULT_CATEGORY_NAME_BY_TYPE = {
+  receita: 'Salário',
+  despesa: 'Alimentação',
+} as const;
+
 interface WalletEntry {
   walletId: string;
   value: string;
@@ -30,6 +35,23 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
   const [loading, setLoading] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const canAddMultipleWallets = wallets.length > 1;
+
+  useEffect(() => {
+    if (!isOpen || categories.length === 0) return;
+
+    const selectedCategory = categories.find((category) => category.id === categoryId);
+    if (selectedCategory && selectedCategory.tipo === type) return;
+
+    const preferredName = DEFAULT_CATEGORY_NAME_BY_TYPE[type].toLocaleLowerCase('pt-BR');
+    const defaultCategory = categories.find(
+      (category) => category.tipo === type && (category.nome || '').toLocaleLowerCase('pt-BR') === preferredName
+    ) || categories.find((category) => category.tipo === type);
+
+    if (defaultCategory && defaultCategory.id !== categoryId) {
+      setCategoryId(defaultCategory.id);
+    }
+  }, [categoryId, categories, isOpen, type]);
 
   useEffect(() => {
     if (transaction) {
@@ -145,20 +167,31 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-text-muted text-sm font-medium">Data</label>
-              <input type="date" className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white text-sm" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <input type="date" className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white focus:outline-none focus:border-primary" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
-            <div className="space-y-1">
-              <label className="text-text-muted text-sm font-medium">Categoria</label>
-              <div className="flex gap-2">
-                <select className="flex-1 h-12 bg-transparent border border-text-muted rounded-lg px-2 text-white text-xs appearance-none" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-                  {categories.filter(c => c.tipo === type).map(c => (<option key={c.id} value={c.id} className="bg-surface">{c.nome}</option>))}
-                </select>
-                <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white"><Plus size={20} /></button>
-              </div>
+          <div className="space-y-1">
+            <label className="text-text-muted text-sm font-medium">Categoria</label>
+            <div className="relative">
+              <select
+                className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-2 pr-8 text-xs text-white focus:outline-none focus:border-primary appearance-none"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                required
+              >
+                <option value="" disabled className="bg-surface">Categoria</option>
+                {categories.filter(c => c.tipo === type).map(c => (
+                  <option key={c.id} value={c.id} className="bg-surface">{c.nome}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             </div>
+            <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="mt-1 text-primary text-xs font-bold flex items-center gap-1">
+              <Plus size={14} /> Criar Categoria
+            </button>
+          </div>
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between items-center"><label className="text-text-muted text-sm font-medium">Carteiras e Valores</label><button type="button" onClick={addWalletEntry} className="text-primary text-xs font-bold flex items-center gap-1"><Plus size={14} /> Adicionar Carteira</button></div>
+            <div className="flex justify-between items-center"><label className="text-text-muted text-sm font-medium">Carteiras e Valores</label></div>
             {entries.map((entry, index) => (
               <div key={index} className="p-4 bg-secondary/50 rounded-2xl space-y-3 border border-white/5 relative">
                 {entries.length > 1 && (<button type="button" onClick={() => removeWalletEntry(index)} className="absolute -top-2 -right-2 bg-danger text-white p-1 rounded-full"><X size={14} /></button>)}
@@ -190,6 +223,12 @@ export default function EditTransactionModal({ isOpen, onClose, transaction }: E
             ))}
             {!isFormValid && (
               <p className="text-danger text-sm">Preencha todas as carteiras com valores maiores que zero.</p>
+            )}
+
+            {canAddMultipleWallets && (
+              <button type="button" onClick={addWalletEntry} className="text-primary text-xs font-bold flex items-center gap-1">
+                <Plus size={14} /> Múltiplas Carteiras
+              </button>
             )}
           </div>
           <div className="space-y-1"><label className="text-text-muted text-sm font-medium">Descrição (opcional)</label><textarea className="w-full h-20 bg-transparent border border-text-muted rounded-lg p-4 text-white focus:outline-none focus:border-primary resize-none" value={description} onChange={(e) => setDescription(e.target.value)} /></div>

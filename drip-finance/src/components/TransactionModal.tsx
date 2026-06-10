@@ -6,6 +6,11 @@ import { useAuth } from '../AuthContext';
 import { cn, formatCurrencyInput, formatDateInputValue, parseCalendarDateInput, parseCurrencyInput } from '../lib/utils';
 import CategoryModal from './CategoryModal';
 
+const DEFAULT_CATEGORY_NAME_BY_TYPE = {
+  receita: 'Salário',
+  despesa: 'Alimentação',
+} as const;
+
 interface WalletEntry {
   walletId: string;
   value: string;
@@ -27,6 +32,23 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const canAddMultipleWallets = wallets.length > 1;
+
+  useEffect(() => {
+    if (!isOpen || categories.length === 0) return;
+
+    const selectedCategory = categories.find((category) => category.id === categoryId);
+    if (selectedCategory && selectedCategory.tipo === type) return;
+
+    const preferredName = DEFAULT_CATEGORY_NAME_BY_TYPE[type].toLocaleLowerCase('pt-BR');
+    const defaultCategory = categories.find(
+      (category) => category.tipo === type && (category.nome || '').toLocaleLowerCase('pt-BR') === preferredName
+    ) || categories.find((category) => category.tipo === type);
+
+    if (defaultCategory && defaultCategory.id !== categoryId) {
+      setCategoryId(defaultCategory.id);
+    }
+  }, [categoryId, categories, isOpen, type]);
 
   useEffect(() => {
     if (!user || !isOpen) return;
@@ -34,9 +56,16 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
     const walletsRef = collection(db, 'users', user.uid, 'wallets');
     const unsubscribeWallets = onSnapshot(walletsRef, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWallets(data);
-      if (data.length > 0 && entries[0].walletId === '') {
-        setEntries([{ walletId: data[0].id, value: '' }]);
+      // Ordena carteiras pela data de criação (mais antiga primeiro)
+      const sorted = data.sort((a: any, b: any) => {
+        const aTime = a.data_criacao?.toMillis?.() || (a.data_criacao?.seconds ? a.data_criacao.seconds * 1000 : Number.MAX_SAFE_INTEGER);
+        const bTime = b.data_criacao?.toMillis?.() || (b.data_criacao?.seconds ? b.data_criacao.seconds * 1000 : Number.MAX_SAFE_INTEGER);
+        return aTime - bTime;
+      });
+
+      setWallets(sorted);
+      if (sorted.length > 0 && entries[0].walletId === '') {
+        setEntries([{ walletId: sorted[0].id, value: '' }]);
       }
     });
 
@@ -158,9 +187,9 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
             </div>
             <div className="space-y-1">
               <label className="text-text-muted text-sm font-medium">Categoria</label>
-              <div className="flex gap-2">
+              <div className="relative">
                 <select
-                  className="flex-1 h-12 bg-transparent border border-text-muted rounded-lg px-2 text-xs text-white focus:outline-none focus:border-primary appearance-none"
+                  className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-2 pr-8 text-xs text-white focus:outline-none focus:border-primary appearance-none"
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   required
@@ -170,19 +199,17 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
                     <option key={c.id} value={c.id} className="bg-surface">{c.nome}</option>
                   ))}
                 </select>
-                <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
-                  <Plus size={20} />
-                </button>
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
               </div>
+              <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="mt-1 text-primary text-xs font-bold flex items-center gap-1">
+                <Plus size={14} /> Criar Categoria
+              </button>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-text-muted text-sm font-medium">Carteiras e Valores</label>
-              <button type="button" onClick={addWalletEntry} className="text-primary text-xs font-bold flex items-center gap-1">
-                <Plus size={14} /> Adicionar Carteira
-              </button>
             </div>
             
             {entries.map((entry, index) => (
@@ -229,6 +256,12 @@ export default function TransactionModal({ isOpen, onClose }: TransactionModalPr
                 </div>
               </div>
             ))}
+
+            {canAddMultipleWallets && (
+              <button type="button" onClick={addWalletEntry} className="text-primary text-xs font-bold flex items-center gap-1">
+                <Plus size={14} /> Múltiplas Carteiras
+              </button>
+            )}
           </div>
 
           <div className="space-y-1">

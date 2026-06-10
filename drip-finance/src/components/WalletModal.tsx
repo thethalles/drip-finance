@@ -20,7 +20,7 @@ function normalizeWalletName(value: string) {
 export default function WalletModal({ isOpen, onClose, wallets = [] }: WalletModalProps) {
   const { user } = useAuth();
   const [name, setName] = useState('');
-  const [initialBalance, setInitialBalance] = useState('');
+  const [initialBalance, setInitialBalance] = useState(formatCurrencyInput('0'));
   const [type, setType] = useState('Conta Corrente');
   const [icon, setIcon] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,12 +29,13 @@ export default function WalletModal({ isOpen, onClose, wallets = [] }: WalletMod
   useEffect(() => {
     if (isOpen) {
       setError('');
+      setInitialBalance(formatCurrencyInput('0'));
     }
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !name || !initialBalance) return;
+    if (!user || !name) return;
 
     const trimmedName = name.trim();
     const normalizedName = normalizeWalletName(trimmedName);
@@ -51,14 +52,14 @@ export default function WalletModal({ isOpen, onClose, wallets = [] }: WalletMod
       const walletsRef = collection(db, 'users', user.uid, 'wallets');
       await addDoc(walletsRef, {
         nome: trimmedName,
-        saldo_inicial: parseCurrencyInput(initialBalance),
+        saldo_inicial: parseCurrencyInput(initialBalance || '0,00'),
         tipo: type,
         icon,
         data_criacao: serverTimestamp()
       });
       onClose();
       setName('');
-      setInitialBalance('');
+      setInitialBalance(formatCurrencyInput('0'));
       setIcon('');
     } catch (error) {
       console.error("Error adding wallet: ", error);
@@ -106,7 +107,6 @@ export default function WalletModal({ isOpen, onClose, wallets = [] }: WalletMod
               className="w-full h-12 bg-transparent border border-text-muted rounded-lg px-4 text-white focus:outline-none focus:border-primary"
               value={initialBalance}
               onChange={(e) => setInitialBalance(formatCurrencyInput(e.target.value))}
-              required
             />
           </div>
 

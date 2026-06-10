@@ -120,6 +120,15 @@ export default function Register() {
           atualizado_em: new Date()
         })
       ));
+
+      const walletsRef = collection(db, 'users', user.uid, 'wallets');
+      await addDoc(walletsRef, {
+        nome: 'Carteira Padrão',
+        saldo_inicial: 0,
+        tipo: 'Conta Corrente',
+        icon: '💼',
+        data_criacao: new Date()
+      });
       
       navigate('/');
     } catch (err: any) {
