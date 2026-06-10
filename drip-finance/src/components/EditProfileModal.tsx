@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { useAuth } from '../AuthContext';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const avatarOptions = ['🤑​','😀', '😎', '🧠', '🚀', '🌈', '🔥', '💎', '🎯', '🪴', '⚡', '⭐​', '❤️​', '🐱​', '🐶​'];
 
@@ -22,6 +23,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   const [avatar, setAvatar] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     if (userData) {
@@ -73,8 +75,9 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain bg-surface rounded-t-[40px] p-8 pb-12 animate-in slide-in-from-bottom duration-300">
+    <>
+      <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm">
+        <div className="w-full max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain bg-surface rounded-t-[40px] p-8 pb-12 animate-in slide-in-from-bottom duration-300">
         <div className="flex items-center justify-between mb-8">
           <button onClick={onClose} className="w-10 h-10 bg-text-muted/20 rounded-lg flex items-center justify-center text-white">
             <X size={24} />
@@ -148,6 +151,16 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
             {error && <p className="text-danger text-sm mt-2">{error}</p>}
           </div>
 
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowChangePassword(true)}
+              className="w-full h-14 bg-white/5 text-white font-bold text-lg rounded-2xl hover:opacity-90 transition-opacity"
+            >
+              Alterar senha
+            </button>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -156,7 +169,9 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
             {loading ? 'Salvando...' : 'Salvar Alterações'}
           </button>
         </form>
+        </div>
       </div>
-    </div>
+      <ChangePasswordModal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} />
+    </>
   );
 }
