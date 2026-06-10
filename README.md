@@ -24,35 +24,35 @@ Dependências do projeto (principais, extraídas de `drip-finance/package.json`)
 
 Instalação e execução (ambiente de desenvolvimento)
 1. Clone o repositório e entre na pasta do projeto:
-
+    ```bash
 	cd <onde-clonou-o-repo>
-
+    ```
 2. Instale as dependências do subprojeto (o script raiz delega para `drip-finance`):
-
+    ```bash
 	cd drip-finance
 	npm install
-
+    ```
 3. Rodar em desenvolvimento (dev server):
-
+    ```bash
 	npm run dev
-
+    ```
 	- Ou, a partir da raiz do repositório, você também pode usar:
-
+    ```bash
 	npm run start
-
+    ```
 4. Build para produção (web):
-
+    ```bash
 	npm run build
-
+    ```
 
 Android (Capacitor)
 - Pré-requisitos: Java JDK, Android Studio, Android SDK (platform tools), variáveis `JAVA_HOME` e `ANDROID_SDK_ROOT` configuradas.
 - Sincronize o projeto Capacitor e abra no Android Studio:
-
+  ```bash  
   cd drip-finance
   npx cap sync android
   npx cap open android
-
+  ```
 - No Android Studio: aguarde a sincronização do Gradle e então rode o app em um emulador ou dispositivo.
 
 Notas sobre Firebase
