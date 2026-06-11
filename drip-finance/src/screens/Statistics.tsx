@@ -318,6 +318,11 @@ export default function Statistics() {
     return tx.valor || 0;
   };
 
+  const getSignedTransactionValueForFilters = (tx: Transaction, value = getTransactionValueForFilters(tx)) => {
+    const normalizedValue = Math.abs(value);
+    return normalizeTransactionType(tx) === 'despesa' ? -normalizedValue : normalizedValue;
+  };
+
   const chartData = useMemo<ChartDataPoint[]>(() => {
     const windowDays = Math.max(1, Math.ceil((currentWindow.end.getTime() - currentWindow.start.getTime()) / DAY_MS) + 1);
     const grouping = windowDays <= 45 ? 'day' : windowDays <= 365 ? 'week' : 'month';
@@ -408,10 +413,11 @@ export default function Statistics() {
       const current = summary.get(name) || { name, income: 0, expense: 0, total: 0 };
       const value = getTransactionValueForFilters(tx);
       const txType = normalizeTransactionType(tx);
+      const signedValue = getSignedTransactionValueForFilters(tx, value);
 
       if (txType === 'receita') current.income += value;
       if (txType === 'despesa') current.expense += value;
-      current.total += value;
+      current.total += signedValue;
       summary.set(name, current);
     });
 
@@ -430,10 +436,11 @@ export default function Statistics() {
           const value = entry.valor || 0;
           const txType = normalizeTransactionType(entry as Transaction);
           const current = summary.get(walletName) || { name: walletName, income: 0, expense: 0, total: 0 };
+          const signedValue = txType === 'despesa' ? -Math.abs(value) : Math.abs(value);
 
           if (txType === 'receita') current.income += value;
           if (txType === 'despesa') current.expense += value;
-          current.total += value;
+          current.total += signedValue;
           summary.set(walletName, current);
         });
         return;
@@ -443,10 +450,11 @@ export default function Statistics() {
       const value = getTransactionValueForFilters(tx);
       const txType = normalizeTransactionType(tx);
       const current = summary.get(walletName) || { name: walletName, income: 0, expense: 0, total: 0 };
+      const signedValue = getSignedTransactionValueForFilters(tx, value);
 
       if (txType === 'receita') current.income += value;
       if (txType === 'despesa') current.expense += value;
-      current.total += value;
+      current.total += signedValue;
       summary.set(walletName, current);
     });
 
@@ -689,21 +697,36 @@ export default function Statistics() {
                 {categorySummary.map((item) => (
                   <div key={item.name} className="bg-surface rounded-2xl p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-white font-medium">{item.name}</p>
-                        <p className="text-text-muted text-xs">Total no período</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className="text-white font-medium truncate">{item.name}</p>
+                        {item.income > 0 && item.expense === 0 ? (
+                          <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                            Receita
+                          </span>
+                        ) : item.expense > 0 && item.income === 0 ? (
+                          <span className="rounded-full bg-danger/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-danger">
+                            Despesa
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+                            Misto
+                          </span>
+                        )}
                       </div>
-                      <p className="text-white font-bold font-roboto-condensed">R$ {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-text-muted text-[10px] uppercase tracking-[0.12em]">Receitas</p>
-                        <p className="text-primary font-semibold mt-1">R$ {item.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      </div>
-                      <div className="rounded-xl bg-white/5 p-3">
-                        <p className="text-text-muted text-[10px] uppercase tracking-[0.12em]">Despesas</p>
-                        <p className="text-danger font-semibold mt-1">R$ {item.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                      </div>
+                    <div className={cn("mt-3 grid gap-3 text-sm", item.income > 0 && item.expense > 0 ? "grid-cols-2" : "grid-cols-1")}>
+                      {(item.income > 0 || item.expense === 0) && (
+                        <div className="rounded-xl bg-white/5 p-3">
+                          <p className="text-text-muted text-[10px] uppercase tracking-[0.12em]">Total</p>
+                          <p className="text-primary font-semibold mt-1">R$ {item.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                      )}
+                      {(item.expense > 0 || item.income === 0) && (
+                        <div className="rounded-xl bg-white/5 p-3">
+                          <p className="text-text-muted text-[10px] uppercase tracking-[0.12em]">Total</p>
+                          <p className="text-danger font-semibold mt-1">R$ {item.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -732,7 +755,7 @@ export default function Statistics() {
                           <p className="text-text-muted text-xs">Total no período</p>
                         </div>
                       </div>
-                      <p className="text-white font-bold font-roboto-condensed">R$ {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                      <p className={cn("font-bold font-roboto-condensed", item.total < 0 ? "text-danger" : "text-white")}>R$ {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                       <div className="rounded-xl bg-white/5 p-3">
