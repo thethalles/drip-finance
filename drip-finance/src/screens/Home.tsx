@@ -141,7 +141,7 @@ export default function Home() {
         <div className="h-full bg-[#D9D9D9] rounded-3xl p-6 text-secondary flex flex-col justify-between">
           <div>
             <p className="font-semibold text-sm">Saldo Total</p>
-            <h2 className="text-4xl font-bold font-roboto-condensed mt-1">
+            <h2 className={cn("text-4xl font-bold font-roboto-condensed mt-1", totalBalance < 0 ? "text-danger" : "text-primary")}>
               R$ {totalBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </h2>
           </div>
