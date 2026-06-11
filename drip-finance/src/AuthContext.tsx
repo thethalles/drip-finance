@@ -23,7 +23,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!currentUser) {
         setUserData(null);
         setLoading(false);
+        return;
       }
+
+      setUserData(null);
+      setLoading(true);
     });
 
     return () => unsubscribeAuth();

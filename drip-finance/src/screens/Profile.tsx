@@ -12,7 +12,7 @@ function isImageUrl(value: string) {
 }
 
 export default function Profile() {
-  const { userData } = useAuth();
+  const { user, userData } = useAuth();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function Profile() {
       </div>
 
       <div className="text-center mb-12">
-        <h2 className="text-white text-2xl font-bold">{userData?.nome || 'Nome do Usuário'}</h2>
+        <h2 className="text-white text-2xl font-bold">{userData?.nome || user?.displayName || 'Nome do Usuário'}</h2>
         <p className="text-text-muted">{userData?.email || 'usuario@email.com'}</p>
       </div>
 

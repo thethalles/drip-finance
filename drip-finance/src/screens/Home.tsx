@@ -132,7 +132,7 @@ export default function Home() {
     <div className="px-6 pt-8">
       <header className="mb-8">
         <p className="text-text-muted font-semibold">Olá,</p>
-        <h1 className="text-white text-2xl font-bold">{userData?.nome || 'Usuário'}</h1>
+        <h1 className="text-white text-2xl font-bold">{userData?.nome || user?.displayName || 'Usuário'}</h1>
       </header>
 
       <div className="relative h-48 mb-12">
