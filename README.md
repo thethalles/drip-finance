@@ -1,6 +1,6 @@
 # DRIP FINANCE
 
-Este repositório contém o aplicativo DRIP Finance um aplicativo inovador de gestão financeira pessoal, desenvolvido para simplificar o controle financeiro dos brasileiros. Com foco em acessibilidade e tecnologia, o app permite registrar rendimentos, acompanhar gastos, filtrar despesas por categoria e período e gerar relatórios visualmente atraentes. A proposta visa democratizar a gestão financeira, proporcionando maior organização e motivação para decisões financeiras mais conscientes e saudáveis.
+Este repositório contém o projeto DRIP Finance um aplicativo inovador de gestão financeira pessoal, desenvolvido para simplificar o controle financeiro dos brasileiros. Com foco em acessibilidade e tecnologia, o app permite registrar rendimentos, acompanhar gastos, filtrar despesas por categoria e período e gerar relatórios visualmente atraentes. A proposta visa democratizar a gestão financeira, proporcionando maior organização e motivação para decisões financeiras mais conscientes e saudáveis.
 
 **Objetivo deste arquivo**: descrever as dependências e os passos necessários para rodar o projeto localmente (web e build Android com Capacitor).
 
